@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import joblib
 model=joblib.load("svm_model.pkl")
@@ -6,6 +7,13 @@ app=FastAPI(
     title="IrisClassification API",
     description="SVM modelforthe Irisdataset",
     version="1.0.0",
+)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 class IrisInput(BaseModel):
     sepal_length:float
