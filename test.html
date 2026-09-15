@@ -1,0 +1,4266 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Iris SVM</title>
+
+    <!-- Thư viện đọc CSV / XLSX / XLS -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+
+        body {
+
+            margin: 0;
+
+            font-family: Arial, sans-serif;
+
+            background: #f5f6f8;
+
+            color: #222;
+
+        }
+
+
+        /* =========================
+           XÁC MINH
+        ========================= */
+
+        #verifyScreen {
+
+            position: fixed;
+
+            inset: 0;
+
+            background: #f5f6f8;
+
+            display: flex;
+
+            justify-content: center;
+
+            align-items: center;
+
+            z-index: 1000;
+
+        }
+
+
+        .verify-box {
+
+            width: 430px;
+
+            max-width: 90%;
+
+            background: white;
+
+            padding: 28px;
+
+            border-radius: 16px;
+
+            border: 1px solid #ddd;
+
+            text-align: center;
+
+        }
+
+
+        .verify-box h2 {
+
+            margin-top: 0;
+
+        }
+
+
+        .verify-images {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .verify-image {
+            height: 105px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            overflow: hidden;
+            cursor: pointer;
+            background: #fafafa;
+            transition: 0.2s;
+        }
+
+        .verify-image:hover {
+            border-color: #777;
+        }
+
+        .verify-image.selected {
+            border-color: #222;
+            border-width: 3px;
+        }
+
+        .verify-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .verify-btn {
+            width: 100%;
+            padding: 11px;
+            border: none;
+            border-radius: 8px;
+            background: #222;
+            color: white;
+            cursor: pointer;
+            font-size: 15px;
+        }
+
+
+        .verify-btn {
+
+            width: 100%;
+
+            padding: 11px;
+
+            border: none;
+
+            border-radius: 8px;
+
+            background: #222;
+
+            color: white;
+
+            cursor: pointer;
+
+            font-size: 15px;
+
+        }
+
+
+        #verifyMessage {
+
+            min-height: 20px;
+
+            margin-bottom: 0;
+
+        }
+
+
+        /* =========================
+           HEADER
+        ========================= */
+
+        header {
+
+            background: white;
+
+            border-bottom: 1px solid #ddd;
+
+            padding: 18px 30px;
+
+        }
+
+
+        header h1 {
+
+            margin: 0;
+
+            font-size: 24px;
+
+        }
+
+
+        header p {
+
+            margin: 5px 0 0;
+
+            color: #666;
+
+        }
+
+
+        /* =========================
+           MENU
+        ========================= */
+
+        nav {
+
+            max-width: 1100px;
+
+            margin: 20px auto 0;
+
+            display: flex;
+
+            gap: 8px;
+
+            flex-wrap: wrap;
+
+            padding: 0 15px;
+
+        }
+
+
+        nav button {
+
+            padding: 10px 16px;
+
+            background: white;
+
+            border: 1px solid #ccc;
+
+            border-radius: 8px;
+
+            cursor: pointer;
+
+            font-size: 15px;
+
+        }
+
+
+        nav button:hover {
+
+            background: #eee;
+
+        }
+
+
+        nav button.active {
+
+            background: #222;
+
+            color: white;
+
+        }
+
+
+        /* =========================
+           MAIN
+        ========================= */
+
+        main {
+
+            max-width: 1100px;
+
+            margin: 25px auto;
+
+            padding: 0 15px;
+
+        }
+
+
+        .page {
+
+            display: none;
+
+        }
+
+
+        .page.active {
+
+            display: block;
+
+        }
+
+
+        .card {
+
+            background: white;
+
+            border: 1px solid #ddd;
+
+            border-radius: 14px;
+
+            padding: 25px;
+
+            margin-bottom: 20px;
+
+        }
+
+
+        .card h2 {
+
+            margin-top: 0;
+
+        }
+
+
+        /* =========================
+           INPUT
+        ========================= */
+
+        .input-grid {
+
+            display: grid;
+
+            grid-template-columns: 1fr 1fr;
+
+            gap: 18px;
+
+        }
+
+
+        .input-group label {
+
+            display: block;
+
+            font-weight: bold;
+
+            margin-bottom: 7px;
+
+        }
+
+
+        .input-group input[type="number"] {
+
+            width: 100%;
+
+            padding: 10px;
+
+            border: 1px solid #ccc;
+
+            border-radius: 7px;
+
+        }
+
+
+        .range-row {
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 10px;
+
+            margin-top: 8px;
+
+        }
+
+
+        .range-row input {
+
+            flex: 1;
+
+        }
+
+
+        .value {
+
+            width: 45px;
+
+            text-align: right;
+
+            font-weight: bold;
+
+        }
+
+
+        .main-btn {
+
+            width: 100%;
+
+            margin-top: 20px;
+
+            padding: 13px;
+
+            border: none;
+
+            border-radius: 8px;
+
+            background: #333;
+
+            color: white;
+
+            font-size: 16px;
+
+            cursor: pointer;
+
+        }
+
+
+        .main-btn:hover {
+
+            background: #111;
+
+        }
+
+
+        /* =========================
+           RESULT
+        ========================= */
+
+        .result {
+
+            display: none;
+
+            margin-top: 20px;
+
+            border: 1px solid #ddd;
+
+            border-radius: 12px;
+
+            overflow: hidden;
+
+        }
+
+
+        .result-content {
+
+            padding: 20px;
+
+        }
+
+
+        .flower-image {
+
+            width: 180px;
+
+            height: 150px;
+
+            object-fit: cover;
+
+            display: block;
+
+            margin: 20px auto 0;
+
+            border-radius: 12px;
+
+        }
+
+
+        .flower-name {
+
+            font-size: 26px;
+
+            font-weight: bold;
+
+            margin-bottom: 10px;
+
+        }
+
+
+        .description {
+
+            color: #555;
+
+            line-height: 1.6;
+
+        }
+
+
+        .result-layout {
+
+            display: grid;
+
+            grid-template-columns: 200px 1fr;
+
+            gap: 25px;
+
+            align-items: center;
+
+        }
+
+
+        .result-layout .flower-image {
+
+            width: 180px;
+
+            height: 150px;
+
+            margin: 0 auto;
+
+        }
+
+
+        .result-badge {
+
+            display: inline-block;
+
+            padding: 5px 10px;
+
+            border-radius: 20px;
+
+            background: #e8f5e9;
+
+            color: #16733a;
+
+            font-size: 13px;
+
+            font-weight: bold;
+
+            margin-bottom: 8px;
+
+        }
+
+
+        /* =========================
+           GUESS
+        ========================= */
+
+        .guess-current {
+
+            border: 1px solid #ddd;
+
+            border-radius: 10px;
+
+            padding: 18px;
+
+            margin-bottom: 20px;
+
+            background: #fafafa;
+
+        }
+
+
+        .random-btn {
+
+            padding: 10px 15px;
+
+            border: 1px solid #aaa;
+
+            background: white;
+
+            border-radius: 8px;
+
+            cursor: pointer;
+
+        }
+
+
+        .random-btn:hover {
+
+            background: #eee;
+
+        }
+
+
+        .guess-options {
+
+            display: grid;
+
+            grid-template-columns: repeat(3, 1fr);
+
+            gap: 12px;
+
+        }
+
+
+        .guess-options button {
+
+            padding: 10px;
+
+            border: 1px solid #bbb;
+
+            background: white;
+
+            border-radius: 10px;
+
+            cursor: pointer;
+
+            text-align: left;
+
+        }
+
+
+        .guess-options button img {
+
+            width: 70px;
+
+            height: 60px;
+
+            object-fit: cover;
+
+            border-radius: 7px;
+
+            vertical-align: middle;
+
+            margin-right: 8px;
+
+        }
+
+
+        .guess-options button.selected {
+
+            background: #222;
+
+            color: white;
+
+            border-color: #222;
+
+        }
+
+
+        #guessResult {
+
+            margin-top: 20px;
+
+            padding: 15px;
+
+            background: #f5f5f5;
+
+            border-radius: 8px;
+
+            line-height: 1.6;
+
+        }
+
+
+        /* =========================
+           FILE
+        ========================= */
+
+        .file-box {
+
+            padding: 25px;
+
+            border: 2px dashed #bbb;
+
+            border-radius: 10px;
+
+            text-align: center;
+
+            background: #fafafa;
+
+        }
+
+
+        .mode-box {
+
+            display: flex;
+
+            gap: 10px;
+
+            margin: 20px 0;
+
+        }
+
+
+        .mode-btn {
+
+            flex: 1;
+
+            padding: 12px;
+
+            border: 1px solid #ccc;
+
+            border-radius: 8px;
+
+            background: white;
+
+            cursor: pointer;
+
+        }
+
+
+        .mode-btn.active {
+
+            background: #222;
+
+            color: white;
+
+        }
+
+
+        .file-info {
+
+            margin-top: 20px;
+
+            padding: 18px;
+
+            background: #f6f6f6;
+
+            border-radius: 10px;
+
+            line-height: 1.7;
+
+        }
+
+
+        /* =========================
+           OVERVIEW
+        ========================= */
+
+        .overview-grid {
+
+            display: grid;
+
+            grid-template-columns:
+                repeat(4, 1fr);
+
+            gap: 15px;
+
+            margin: 20px 0;
+
+        }
+
+
+        .stat-card {
+
+            border: 1px solid #ddd;
+
+            border-radius: 12px;
+
+            padding: 18px;
+
+            background: white;
+
+        }
+
+
+        .stat-title {
+
+            color: #666;
+
+            margin-bottom: 8px;
+
+        }
+
+
+        .stat-number {
+
+            font-size: 28px;
+
+            font-weight: bold;
+
+        }
+
+
+        .stat-number.success {
+
+            color: #16803c;
+
+        }
+
+
+        .stat-number.error {
+
+            color: #b42318;
+
+        }
+
+
+        /* =========================
+           FLOWER DISTRIBUTION
+        ========================= */
+
+        .flower-summary {
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 15px;
+
+            border: 1px solid #ddd;
+
+            border-radius: 10px;
+
+            padding: 12px;
+
+            margin: 10px 0;
+
+        }
+
+
+        .flower-summary img {
+
+            width: 70px;
+
+            height: 60px;
+
+            object-fit: cover;
+
+            border-radius: 9px;
+
+            flex-shrink: 0;
+
+        }
+
+
+        .flower-summary-content {
+
+            flex: 1;
+
+        }
+
+
+        .flower-summary-title {
+
+            font-weight: bold;
+
+            font-size: 16px;
+
+        }
+
+
+        .flower-summary-count {
+
+            color: #555;
+
+            margin: 3px 0 8px;
+
+        }
+
+
+        .progress {
+
+            width: 100%;
+
+            height: 10px;
+
+            background: #e9e9e9;
+
+            border-radius: 20px;
+
+            overflow: hidden;
+
+        }
+
+
+        .progress-bar {
+
+            height: 100%;
+
+            background: #555;
+
+        }
+
+
+        /* =========================
+           TABLE
+        ========================= */
+
+        .table-wrapper {
+
+            overflow-x: auto;
+
+            margin-top: 15px;
+
+        }
+
+
+        table {
+
+            width: 100%;
+
+            border-collapse: collapse;
+
+            min-width: 850px;
+
+        }
+
+
+        th,
+        td {
+
+            border: 1px solid #ddd;
+
+            padding: 9px;
+
+            text-align: center;
+
+        }
+
+
+        th {
+
+            background: #f1f1f1;
+
+        }
+
+
+        .correct {
+
+            color: #16803c;
+
+            font-weight: bold;
+
+        }
+
+
+        .wrong {
+
+            color: #b42318;
+
+            font-weight: bold;
+
+        }
+
+
+        .flower-cell {
+
+            font-weight: bold;
+
+        }
+
+
+        .flower-cell.setosa {
+
+            color: #126b35;
+
+        }
+
+
+        .flower-cell.versicolor {
+
+            color: #3458a8;
+
+        }
+
+
+        .flower-cell.virginica {
+
+            color: #8b4aa8;
+
+        }
+
+
+        /* =========================
+           ANALYSIS HEADER
+        ========================= */
+
+        .analysis-header {
+
+            background: #f6f6f6;
+
+            border-radius: 10px;
+
+            padding: 16px;
+
+            line-height: 1.7;
+
+        }
+
+
+        .analysis-mode {
+
+            display: inline-block;
+
+            padding: 5px 10px;
+
+            border-radius: 20px;
+
+            background: #e8e8e8;
+
+            font-weight: bold;
+
+        }
+
+
+        .note {
+
+            padding: 14px;
+
+            background: #f7f7f7;
+
+            border-radius: 8px;
+
+            margin-top: 15px;
+
+            line-height: 1.6;
+
+        }
+
+
+        /* =========================
+           HISTORY
+        ========================= */
+
+        .history-item {
+
+            border: 1px solid #ddd;
+
+            border-radius: 10px;
+
+            padding: 15px;
+
+            margin-top: 12px;
+
+            background: white;
+
+        }
+
+
+        .history-title {
+
+            font-weight: bold;
+
+            font-size: 16px;
+
+        }
+
+
+        .clear-btn {
+
+            padding: 9px 14px;
+
+            background: white;
+
+            border: 1px solid #aaa;
+
+            border-radius: 7px;
+
+            cursor: pointer;
+
+        }
+
+
+        /* =========================
+           RESPONSIVE
+        ========================= */
+
+        @media(max-width:800px) {
+
+            .input-grid {
+
+                grid-template-columns: 1fr;
+
+            }
+
+
+            .overview-grid {
+
+                grid-template-columns: 1fr 1fr;
+
+            }
+
+
+            .result-layout {
+
+                grid-template-columns: 1fr;
+
+            }
+
+
+            .guess-options {
+
+                grid-template-columns: 1fr;
+
+            }
+
+        }
+
+
+        @media(max-width:500px) {
+
+            header {
+
+                padding: 15px;
+
+            }
+
+
+            .overview-grid {
+
+                grid-template-columns: 1fr;
+
+            }
+
+
+            .mode-box {
+
+                flex-direction: column;
+
+            }
+
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+
+<!-- =====================================================
+     XÁC MINH NGƯỜI DÙNG
+===================================================== -->
+
+<div id="verifyScreen">
+
+    <div class="verify-box">
+
+        <h2>Xác minh người dùng</h2>
+
+        <p>Chọn hình ảnh có hoa Iris để tiếp tục.</p>
+
+        <div class="verify-images">
+
+            <div class="verify-image" onclick="selectVerify(this, true)">
+                <img src="images/setosa.jpg" alt="Iris">
+            </div>
+
+            <div class="verify-image" onclick="selectVerify(this, false)">
+                <div style="
+                    height:100%;
+                    display:flex;
+                    align-items:center;
+                    justify-content:center;
+                    font-size:45px;">
+                    ☕
+                </div>
+            </div>
+
+            <div class="verify-image" onclick="selectVerify(this, true)">
+                <img src="images/versicolor.jpg" alt="Iris">
+            </div>
+
+            <div class="verify-image" onclick="selectVerify(this, false)">
+                <div style="
+                    height:100%;
+                    display:flex;
+                    align-items:center;
+                    justify-content:center;
+                    font-size:45px;">
+                    🐱
+                </div>
+            </div>
+
+            <div class="verify-image" onclick="selectVerify(this, false)">
+                <div style="
+                    height:100%;
+                    display:flex;
+                    align-items:center;
+                    justify-content:center;
+                    font-size:45px;">
+                    🍎
+                </div>
+            </div>
+
+            <div class="verify-image" onclick="selectVerify(this, true)">
+                <img src="images/virginica.jpg" alt="Iris">
+            </div>
+
+        </div>
+
+        <button class="verify-btn" onclick="verifyUser()">
+            Xác minh
+        </button>
+
+        <p id="verifyMessage"></p>
+
+    </div>
+
+</div>
+
+
+<!-- =====================================================
+     HEADER
+===================================================== -->
+
+<header>
+
+    <h1>Iris SVM</h1>
+
+    <p>
+        Nhận diện loài hoa Iris bằng mô hình học máy SVM
+    </p>
+
+</header>
+
+
+
+<!-- =====================================================
+     MENU
+===================================================== -->
+
+<nav>
+
+    <button
+        id="navPredict"
+        class="active"
+        onclick="showPage('predictPage', this)">
+
+        Nhận diện
+
+    </button>
+
+
+    <button
+        id="navGuess"
+        onclick="showPage('guessPage', this)">
+
+        Bạn đoán trước
+
+    </button>
+
+
+    <button
+        id="navFile"
+        onclick="showPage('filePage', this)">
+
+        Phân tích dữ liệu
+
+    </button>
+
+
+    <button
+        id="navHistory"
+        onclick="showPage('historyPage', this)">
+
+        Lịch sử
+
+    </button>
+
+</nav>
+
+
+
+<main>
+
+
+<!-- =====================================================
+     1. NHẬN DIỆN
+===================================================== -->
+
+<section
+    id="predictPage"
+    class="page active">
+
+
+    <div class="card">
+
+        <h2>🌸 Nhận diện hoa Iris</h2>
+
+        <p>
+            Nhập thông số hoặc sử dụng thanh kéo,
+            sau đó để mô hình SVM phân loại.
+        </p>
+
+
+        <div class="input-grid">
+
+
+            <!-- SEPAL LENGTH -->
+
+            <div class="input-group">
+
+                <label>
+                    Sepal Length (cm)
+                </label>
+
+                <input
+                    id="sepal_length"
+                    type="number"
+                    min="4"
+                    max="8"
+                    step="0.1"
+                    value="5.1"
+                    oninput="syncRange(
+                        'sepal_length',
+                        'range_sepal_length'
+                    )">
+
+
+                <div class="range-row">
+
+                    <input
+                        id="range_sepal_length"
+                        type="range"
+                        min="4"
+                        max="8"
+                        step="0.1"
+                        value="5.1"
+                        oninput="syncInput(
+                            'range_sepal_length',
+                            'sepal_length'
+                        )">
+
+                    <span
+                        id="value_sepal_length"
+                        class="value">
+
+                        5.1
+
+                    </span>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- SEPAL WIDTH -->
+
+            <div class="input-group">
+
+                <label>
+                    Sepal Width (cm)
+                </label>
+
+                <input
+                    id="sepal_width"
+                    type="number"
+                    min="2"
+                    max="4.5"
+                    step="0.1"
+                    value="3.5"
+                    oninput="syncRange(
+                        'sepal_width',
+                        'range_sepal_width'
+                    )">
+
+
+                <div class="range-row">
+
+                    <input
+                        id="range_sepal_width"
+                        type="range"
+                        min="2"
+                        max="4.5"
+                        step="0.1"
+                        value="3.5"
+                        oninput="syncInput(
+                            'range_sepal_width',
+                            'sepal_width'
+                        )">
+
+                    <span
+                        id="value_sepal_width"
+                        class="value">
+
+                        3.5
+
+                    </span>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- PETAL LENGTH -->
+
+            <div class="input-group">
+
+                <label>
+                    Petal Length (cm)
+                </label>
+
+                <input
+                    id="petal_length"
+                    type="number"
+                    min="1"
+                    max="7"
+                    step="0.1"
+                    value="1.4"
+                    oninput="syncRange(
+                        'petal_length',
+                        'range_petal_length'
+                    )">
+
+
+                <div class="range-row">
+
+                    <input
+                        id="range_petal_length"
+                        type="range"
+                        min="1"
+                        max="7"
+                        step="0.1"
+                        value="1.4"
+                        oninput="syncInput(
+                            'range_petal_length',
+                            'petal_length'
+                        )">
+
+                    <span
+                        id="value_petal_length"
+                        class="value">
+
+                        1.4
+
+                    </span>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- PETAL WIDTH -->
+
+            <div class="input-group">
+
+                <label>
+                    Petal Width (cm)
+                </label>
+
+                <input
+                    id="petal_width"
+                    type="number"
+                    min="0.1"
+                    max="2.5"
+                    step="0.1"
+                    value="0.2"
+                    oninput="syncRange(
+                        'petal_width',
+                        'range_petal_width'
+                    )">
+
+
+                <div class="range-row">
+
+                    <input
+                        id="range_petal_width"
+                        type="range"
+                        min="0.1"
+                        max="2.5"
+                        step="0.1"
+                        value="0.2"
+                        oninput="syncInput(
+                            'range_petal_width',
+                            'petal_width'
+                        )">
+
+                    <span
+                        id="value_petal_width"
+                        class="value">
+
+                        0.2
+
+                    </span>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+
+        <button
+            class="main-btn"
+            onclick="predict()">
+
+            Phân loại bằng SVM
+
+        </button>
+
+
+
+        <!-- KẾT QUẢ -->
+
+        <div
+            id="result"
+            class="result">
+
+            <div class="result-layout">
+
+                <img
+                    id="flowerImage"
+                    class="flower-image"
+                    src=""
+                    alt="Iris">
+
+
+                <div class="result-content">
+
+                    <span class="result-badge">
+                        Kết quả SVM
+                    </span>
+
+                    <div
+                        id="flowerName"
+                        class="flower-name">
+                    </div>
+
+                    <div
+                        id="flowerDescription"
+                        class="description">
+                    </div>
+
+                    <p id="flowerCompare"></p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+
+<!-- =====================================================
+     2. BẠN ĐOÁN TRƯỚC
+===================================================== -->
+
+<section
+    id="guessPage"
+    class="page">
+
+
+    <div class="card">
+
+        <h2>🧠 Bạn đoán trước SVM</h2>
+
+        <p>
+            Hệ thống tạo một bộ thông số ngẫu nhiên.
+            Hãy xem thông số và đoán loài hoa trước khi SVM kiểm tra.
+        </p>
+
+
+        <div class="guess-current">
+
+            <h3>
+                Thông số mẫu hiện tại
+            </h3>
+
+
+            <div class="input-grid">
+
+                <div>
+                    <b>Sepal Length:</b>
+                    <span id="guessSepalLength">-</span> cm
+                </div>
+
+                <div>
+                    <b>Sepal Width:</b>
+                    <span id="guessSepalWidth">-</span> cm
+                </div>
+
+                <div>
+                    <b>Petal Length:</b>
+                    <span id="guessPetalLength">-</span> cm
+                </div>
+
+                <div>
+                    <b>Petal Width:</b>
+                    <span id="guessPetalWidth">-</span> cm
+                </div>
+
+            </div>
+
+
+            <button
+                class="random-btn"
+                onclick="generateRandomSample()">
+
+                🔄 Tạo thông số ngẫu nhiên
+
+            </button>
+
+        </div>
+
+
+        <h3>
+            Bạn đoán đây là:
+        </h3>
+
+
+        <div class="guess-options">
+
+            <button
+                onclick="selectGuess('setosa', this)">
+
+                <img src="images/setosa.jpg">
+
+                Setosa
+
+            </button>
+
+
+            <button
+                onclick="selectGuess('versicolor', this)">
+
+                <img src="images/versicolor.jpg">
+
+                Versicolor
+
+            </button>
+
+
+            <button
+                onclick="selectGuess('virginica', this)">
+
+                <img src="images/virginica.jpg">
+
+                Virginica
+
+            </button>
+
+        </div>
+
+
+        <button
+            class="main-btn"
+            onclick="checkGuess()">
+
+            Để SVM kiểm tra
+
+        </button>
+
+
+        <div id="guessResult">
+
+            Chưa có kết quả.
+
+        </div>
+
+    </div>
+
+</section>
+
+
+
+<!-- =====================================================
+     3. PHÂN TÍCH DỮ LIỆU
+===================================================== -->
+
+<section
+    id="filePage"
+    class="page">
+
+
+    <div class="card">
+
+        <h2>📂 Phân tích dữ liệu</h2>
+
+        <p>
+            Tải dữ liệu để SVM phân loại từng mẫu.
+            Hỗ trợ CSV, XLSX, XLS và TXT.
+        </p>
+
+
+        <div class="file-box">
+
+            <input
+                id="fileInput"
+                type="file"
+                accept=".csv,.xlsx,.xls,.txt"
+                onchange="analyzeFile()">
+
+            <p>
+                Hỗ trợ:
+                <b>CSV · XLSX · XLS · TXT</b>
+            </p>
+
+        </div>
+
+
+        <!-- CHẾ ĐỘ -->
+
+        <div class="mode-box">
+
+            <button
+                id="unlabeledMode"
+                class="mode-btn active"
+                onclick="setAnalysisMode('unlabeled')">
+
+                Chưa biết nhãn
+                <br>
+                <small>Phân loại</small>
+
+            </button>
+
+
+            <button
+                id="labeledMode"
+                class="mode-btn"
+                onclick="setAnalysisMode('labeled')">
+
+                Có nhãn
+                <br>
+                <small>Kiểm tra dự đoán</small>
+
+            </button>
+
+        </div>
+
+
+        <div
+            id="fileInfo"
+            class="file-info"
+            style="display:none;">
+        </div>
+
+
+        <div
+            id="fileResult">
+        </div>
+
+    </div>
+
+</section>
+
+
+
+<!-- =====================================================
+     4. LỊCH SỬ
+===================================================== -->
+
+<section
+    id="historyPage"
+    class="page">
+
+
+    <div class="card">
+
+        <h2>🕘 Lịch sử</h2>
+
+
+        <button
+            class="clear-btn"
+            onclick="clearHistory()">
+
+            Xóa lịch sử
+
+        </button>
+
+
+        <div id="history">
+
+        </div>
+
+    </div>
+
+</section>
+
+
+</main>
+
+
+
+<script>
+
+
+/* =====================================================
+   CẤU HÌNH
+===================================================== */
+
+const API_URL =
+    "https://iris-fastapi-r415.onrender.com/predict";
+
+
+let analysisMode = "unlabeled";
+
+let selectedGuess = "";
+
+let currentGuessData = null;
+
+let selectedVerify = -1;
+
+
+
+/* =====================================================
+   THÔNG TIN HOA
+===================================================== */
+
+const flowerInfo = {
+
+    setosa: {
+
+        name: "Iris Setosa",
+
+        image: "images/setosa.jpg",
+
+        description:
+            "Setosa thường có cánh hoa nhỏ và hẹp, hình thái khá khác biệt so với hai nhóm còn lại nên thường dễ phân biệt."
+
+    },
+
+
+    versicolor: {
+
+        name: "Iris Versicolor",
+
+        image: "images/versicolor.jpg",
+
+        description:
+            "Versicolor có kích thước cánh hoa ở mức trung gian, thường nằm giữa Setosa và Virginica về đặc điểm hình thái."
+
+    },
+
+
+    virginica: {
+
+        name: "Iris Virginica",
+
+        image: "images/virginica.jpg",
+
+        description:
+            "Virginica thường có cánh hoa lớn và dài hơn, là nhóm có kích thước cánh hoa nổi bật trong ba nhóm Iris."
+
+    }
+
+};
+
+
+
+/* =====================================================
+   XÁC MINH
+===================================================== */
+
+function selectVerify(button, isIris) {
+
+    selectedVerify = isIris;
+
+    document
+        .querySelectorAll(".verify-image")
+        .forEach(btn => {
+            btn.classList.remove("selected");
+        });
+
+    button.classList.add("selected");
+}
+
+
+function verifyUser() {
+
+    if (selectedVerify === -1) {
+
+        document.getElementById("verifyMessage").innerText =
+            "Vui lòng chọn một hình ảnh.";
+
+        return;
+    }
+
+    if (selectedVerify === false) {
+
+        document.getElementById("verifyMessage").innerText =
+            "❌ Đây không phải hoa Iris. Vui lòng chọn lại.";
+
+        return;
+    }
+
+    document.getElementById("verifyMessage").innerText =
+        "✓ Xác minh thành công.";
+
+    setTimeout(() => {
+        document.getElementById("verifyScreen").style.display =
+            "none";
+    }, 500);
+}
+
+
+
+/* =====================================================
+   CHUYỂN TRANG
+===================================================== */
+
+function showPage(pageId, button) {
+
+    document
+        .querySelectorAll(".page")
+        .forEach(page => {
+
+            page.classList.remove("active");
+
+        });
+
+
+    document
+        .getElementById(pageId)
+        .classList.add("active");
+
+
+    document
+        .querySelectorAll("nav button")
+        .forEach(btn => {
+
+            btn.classList.remove("active");
+
+        });
+
+
+    if (button) {
+
+        button.classList.add("active");
+
+    }
+
+
+    if (pageId === "guessPage") {
+
+        if (!currentGuessData) {
+
+            generateRandomSample();
+
+        }
+
+    }
+
+
+    if (pageId === "historyPage") {
+
+        showHistory();
+
+    }
+
+}
+
+
+
+/* =====================================================
+   ĐỒNG BỘ INPUT + RANGE
+===================================================== */
+
+function syncRange(inputId, rangeId) {
+
+    const value =
+        document.getElementById(inputId).value;
+
+
+    document.getElementById(rangeId).value =
+        value;
+
+
+    document.getElementById(
+        "value_" + inputId
+    ).innerText = value;
+
+}
+
+
+function syncInput(rangeId, inputId) {
+
+    const value =
+        document.getElementById(rangeId).value;
+
+
+    document.getElementById(inputId).value =
+        value;
+
+
+    document.getElementById(
+        "value_" + inputId
+    ).innerText = value;
+
+}
+
+
+
+/* =====================================================
+   LẤY DỮ LIỆU NHẬN DIỆN
+===================================================== */
+
+function getData() {
+
+    return {
+
+        sepal_length:
+            Number(
+                document.getElementById(
+                    "sepal_length"
+                ).value
+            ),
+
+        sepal_width:
+            Number(
+                document.getElementById(
+                    "sepal_width"
+                ).value
+            ),
+
+        petal_length:
+            Number(
+                document.getElementById(
+                    "petal_length"
+                ).value
+            ),
+
+        petal_width:
+            Number(
+                document.getElementById(
+                    "petal_width"
+                ).value
+            )
+
+    };
+
+}
+
+
+
+/* =====================================================
+   KIỂM TRA DỮ LIỆU
+===================================================== */
+
+function validInput(data) {
+
+    return (
+
+        Number.isFinite(data.sepal_length) &&
+
+        Number.isFinite(data.sepal_width) &&
+
+        Number.isFinite(data.petal_length) &&
+
+        Number.isFinite(data.petal_width)
+
+    );
+
+}
+
+
+
+/* =====================================================
+   GỌI API SVM
+===================================================== */
+
+async function callSVM(data) {
+
+    const response =
+        await fetch(
+            API_URL,
+            {
+
+                method: "POST",
+
+                headers: {
+
+                    "Content-Type":
+                        "application/json"
+
+                },
+
+                body:
+                    JSON.stringify(data)
+
+            }
+        );
+
+
+    if (!response.ok) {
+
+        throw new Error(
+            "API trả về lỗi " +
+            response.status
+        );
+
+    }
+
+
+    const result =
+        await response.json();
+
+
+    return normalizeSpecies(
+        result.prediction
+    );
+
+}
+
+
+
+/* =====================================================
+   CHUẨN HÓA TÊN LOÀI
+===================================================== */
+
+function normalizeSpecies(value) {
+
+    if (value === undefined ||
+        value === null) {
+
+        return "";
+
+    }
+
+
+    let text =
+        String(value)
+            .trim()
+            .toLowerCase();
+
+
+    text =
+        text.replace(
+            /^iris[-_\s]*/,
+            ""
+        );
+
+
+    text =
+        text.replace(
+            /^i[-_\s]*/,
+            ""
+        );
+
+
+    text =
+        text.replace(
+            /[\s_]+/g,
+            "-"
+        );
+
+
+    if (text.includes("setosa")) {
+
+        return "setosa";
+
+    }
+
+
+    if (text.includes("versicolor")) {
+
+        return "versicolor";
+
+    }
+
+
+    if (text.includes("virginica")) {
+
+        return "virginica";
+
+    }
+
+
+    return text;
+
+}
+
+
+
+/* =====================================================
+   HIỂN THỊ TÊN HOA
+===================================================== */
+
+function displayFlowerName(species) {
+
+    const normalized =
+        normalizeSpecies(species);
+
+
+    if (flowerInfo[normalized]) {
+
+        return flowerInfo[normalized].name;
+
+    }
+
+
+    return species || "Không xác định";
+
+}
+
+
+
+/* =====================================================
+   NHẬN DIỆN
+===================================================== */
+
+async function predict() {
+
+    const data =
+        getData();
+
+
+    if (!validInput(data)) {
+
+        alert(
+            "Vui lòng nhập đầy đủ 4 thông số hợp lệ."
+        );
+
+        return;
+
+    }
+
+
+    const resultBox =
+        document.getElementById("result");
+
+
+    resultBox.style.display =
+        "block";
+
+
+    document.getElementById(
+        "flowerName"
+    ).innerText =
+        "Đang phân loại...";
+
+
+    document.getElementById(
+        "flowerDescription"
+    ).innerText =
+        "Đang gửi dữ liệu đến mô hình SVM.";
+
+
+    try {
+
+        const species =
+            await callSVM(data);
+
+
+        const info =
+            flowerInfo[species];
+
+
+        if (!info) {
+
+            throw new Error(
+                "API trả về loài không xác định."
+            );
+
+        }
+
+
+        document.getElementById(
+            "flowerImage"
+        ).src =
+            info.image;
+
+
+        document.getElementById(
+            "flowerName"
+        ).innerText =
+            info.name;
+
+
+        document.getElementById(
+            "flowerDescription"
+        ).innerText =
+            info.description;
+
+
+        document.getElementById(
+            "flowerCompare"
+        ).innerText =
+            "Kết quả được dự đoán bởi mô hình SVM.";
+
+
+        saveHistory(
+
+            {
+
+                type: "single",
+
+                prediction: species,
+
+                method: "Nhập số liệu"
+
+            }
+
+        );
+
+    }
+
+
+    catch (error) {
+
+        document.getElementById(
+            "flowerName"
+        ).innerText =
+            "Không thể kết nối API.";
+
+
+        document.getElementById(
+            "flowerDescription"
+        ).innerText =
+            "Vui lòng kiểm tra API FastAPI / Render.";
+
+
+        console.error(error);
+
+    }
+
+}
+
+
+
+/* =====================================================
+   TẠO THÔNG SỐ NGẪU NHIÊN
+===================================================== */
+
+function randomValue(min, max) {
+
+    return (
+        Math.round(
+            (
+                Math.random()
+                * (max - min)
+                + min
+            ) * 10
+        ) / 10
+    );
+
+}
+
+
+function generateRandomSample() {
+
+    currentGuessData = {
+
+        sepal_length:
+            randomValue(4.3, 7.9),
+
+        sepal_width:
+            randomValue(2.0, 4.4),
+
+        petal_length:
+            randomValue(1.0, 6.9),
+
+        petal_width:
+            randomValue(0.1, 2.5)
+
+    };
+
+
+    document.getElementById(
+        "guessSepalLength"
+    ).innerText =
+        currentGuessData.sepal_length;
+
+
+    document.getElementById(
+        "guessSepalWidth"
+    ).innerText =
+        currentGuessData.sepal_width;
+
+
+    document.getElementById(
+        "guessPetalLength"
+    ).innerText =
+        currentGuessData.petal_length;
+
+
+    document.getElementById(
+        "guessPetalWidth"
+    ).innerText =
+        currentGuessData.petal_width;
+
+
+    selectedGuess = "";
+
+
+    document
+        .querySelectorAll(".guess-options button")
+        .forEach(btn => {
+
+            btn.classList.remove("selected");
+
+        });
+
+
+    document.getElementById(
+        "guessResult"
+    ).innerText =
+        "Chưa có kết quả.";
+
+}
+
+
+
+/* =====================================================
+   BẠN ĐOÁN
+===================================================== */
+
+function selectGuess(species, button) {
+
+    selectedGuess =
+        species;
+
+
+    document
+        .querySelectorAll(
+            ".guess-options button"
+        )
+        .forEach(btn => {
+
+            btn.classList.remove(
+                "selected"
+            );
+
+        });
+
+
+    button.classList.add(
+        "selected"
+    );
+
+}
+
+
+async function checkGuess() {
+
+    if (!currentGuessData) {
+
+        generateRandomSample();
+
+        return;
+
+    }
+
+
+    if (selectedGuess === "") {
+
+        document.getElementById(
+            "guessResult"
+        ).innerText =
+            "Hãy chọn một loài trước.";
+
+        return;
+
+    }
+
+
+    const resultBox =
+        document.getElementById(
+            "guessResult"
+        );
+
+
+    resultBox.innerText =
+        "Đang để SVM kiểm tra...";
+
+
+    try {
+
+        const prediction =
+            await callSVM(
+                currentGuessData
+            );
+
+
+        if (
+            selectedGuess ===
+            prediction
+        ) {
+
+            resultBox.innerHTML =
+
+                "<b>🎉 Bạn đoán đúng!</b><br>" +
+
+                "Bạn chọn: " +
+                displayFlowerName(
+                    selectedGuess
+                ) +
+
+                "<br>" +
+
+                "SVM dự đoán: " +
+                displayFlowerName(
+                    prediction
+                );
+
+        }
+
+        else {
+
+            resultBox.innerHTML =
+
+                "<b>Chưa đúng.</b><br>" +
+
+                "Bạn chọn: " +
+                displayFlowerName(
+                    selectedGuess
+                ) +
+
+                "<br>" +
+
+                "SVM dự đoán: " +
+                displayFlowerName(
+                    prediction
+                );
+
+        }
+
+
+        saveHistory(
+
+            {
+
+                type: "single",
+
+                prediction:
+                    prediction,
+
+                method:
+                    "Bạn đoán trước SVM"
+
+            }
+
+        );
+
+    }
+
+
+    catch (error) {
+
+        resultBox.innerText =
+            "Không thể kết nối API.";
+
+        console.error(error);
+
+    }
+
+}
+
+
+
+/* =====================================================
+   CHẾ ĐỘ PHÂN TÍCH
+===================================================== */
+
+function setAnalysisMode(mode) {
+
+    analysisMode =
+        mode;
+
+
+    document
+        .getElementById(
+            "unlabeledMode"
+        )
+        .classList.toggle(
+            "active",
+            mode === "unlabeled"
+        );
+
+
+    document
+        .getElementById(
+            "labeledMode"
+        )
+        .classList.toggle(
+            "active",
+            mode === "labeled"
+        );
+
+
+    document.getElementById(
+        "fileResult"
+    ).innerHTML = "";
+
+}
+
+
+
+/* =====================================================
+   ĐỌC FILE
+===================================================== */
+
+function analyzeFile() {
+
+    const file =
+        document.getElementById(
+            "fileInput"
+        ).files[0];
+
+
+    if (!file) {
+
+        return;
+
+    }
+
+
+    document.getElementById(
+        "fileInfo"
+    ).style.display =
+        "block";
+
+
+    document.getElementById(
+        "fileInfo"
+    ).innerHTML =
+
+        "<b>File:</b> " +
+        file.name +
+
+        "<br>" +
+
+        "<b>Chế độ:</b> " +
+        (
+            analysisMode === "labeled"
+                ? "Có nhãn – Kiểm tra dự đoán"
+                : "Chưa biết nhãn – Phân loại"
+        ) +
+
+        "<br><br>" +
+
+        "Đang đọc dữ liệu...";
+
+
+    document.getElementById(
+        "fileResult"
+    ).innerHTML =
+        "";
+
+
+    const extension =
+        file.name
+            .split(".")
+            .pop()
+            .toLowerCase();
+
+
+    if (extension === "txt") {
+
+        const reader =
+            new FileReader();
+
+
+        reader.onload =
+            function(event) {
+
+                try {
+
+                    const rows =
+                        parseTXT(
+                            event.target.result
+                        );
+
+
+                    processRows(
+                        rows,
+                        file.name
+                    );
+
+                }
+
+                catch (error) {
+
+                    showFileError(
+                        error.message
+                    );
+
+                }
+
+            };
+
+
+        reader.readAsText(file);
+
+        return;
+
+    }
+
+
+    const reader =
+        new FileReader();
+
+
+    reader.onload =
+        function(event) {
+
+            try {
+
+                const data =
+                    new Uint8Array(
+                        event.target.result
+                    );
+
+
+                const workbook =
+                    XLSX.read(
+                        data,
+                        {
+                            type: "array"
+                        }
+                    );
+
+
+                const sheet =
+                    workbook.Sheets[
+                        workbook.SheetNames[0]
+                    ];
+
+
+                const rows =
+                    XLSX.utils.sheet_to_json(
+                        sheet,
+                        {
+                            defval: ""
+                        }
+                    );
+
+
+                processRows(
+                    rows,
+                    file.name
+                );
+
+            }
+
+            catch (error) {
+
+                showFileError(
+                    "Không thể đọc file: " +
+                    error.message
+                );
+
+            }
+
+        };
+
+
+    reader.readAsArrayBuffer(file);
+
+}
+
+
+
+/* =====================================================
+   ĐỌC TXT
+===================================================== */
+
+function parseTXT(text) {
+
+    const lines =
+        text
+            .replace(/\r/g, "")
+            .split("\n")
+            .filter(
+                line =>
+                    line.trim() !== ""
+            );
+
+
+    if (lines.length === 0) {
+
+        return [];
+
+    }
+
+
+    const firstLine =
+        lines[0].trim();
+
+
+    let delimiter = ",";
+
+
+    if (firstLine.includes("\t")) {
+
+        delimiter = "\t";
+
+    }
+
+    else if (firstLine.includes(";")) {
+
+        delimiter = ";";
+
+    }
+
+    else if (
+        firstLine.includes(",")
+    ) {
+
+        delimiter = ",";
+
+    }
+
+    else {
+
+        delimiter = /\s+/;
+
+    }
+
+
+    const headers =
+        firstLine
+            .split(delimiter)
+            .map(
+                h =>
+                    h.trim()
+            );
+
+
+    return lines
+        .slice(1)
+        .map(line => {
+
+            const values =
+                line
+                    .split(delimiter)
+                    .map(
+                        value =>
+                            value.trim()
+                    );
+
+
+            const row = {};
+
+
+            headers.forEach(
+                (header, index) => {
+
+                    row[header] =
+                        values[index] ?? "";
+
+                }
+            );
+
+
+            return row;
+
+        });
+
+}
+
+
+
+/* =====================================================
+   TÌM TÊN CỘT
+===================================================== */
+
+function findColumn(row, names) {
+
+    const keys =
+        Object.keys(row);
+
+
+    for (
+        const name of names
+    ) {
+
+        const found =
+            keys.find(
+                key =>
+                    key
+                        .trim()
+                        .toLowerCase() ===
+                    name
+                        .trim()
+                        .toLowerCase()
+            );
+
+
+        if (found) {
+
+            return found;
+
+        }
+
+    }
+
+
+    return null;
+
+}
+
+
+
+/* =====================================================
+   CHUYỂN MỘT DÒNG THÀNH INPUT SVM
+===================================================== */
+
+function rowToInput(row) {
+
+    const sepalLengthColumn =
+        findColumn(
+            row,
+            [
+                "sepal_length",
+                "sepal length",
+                "Sepal.Length",
+                "Sepal_Length"
+            ]
+        );
+
+
+    const sepalWidthColumn =
+        findColumn(
+            row,
+            [
+                "sepal_width",
+                "sepal width",
+                "Sepal.Width",
+                "Sepal_Width"
+            ]
+        );
+
+
+    const petalLengthColumn =
+        findColumn(
+            row,
+            [
+                "petal_length",
+                "petal length",
+                "Petal.Length",
+                "Petal_Length"
+            ]
+        );
+
+
+    const petalWidthColumn =
+        findColumn(
+            row,
+            [
+                "petal_width",
+                "petal width",
+                "Petal.Width",
+                "Petal_Width"
+            ]
+        );
+
+
+    if (
+        !sepalLengthColumn ||
+        !sepalWidthColumn ||
+        !petalLengthColumn ||
+        !petalWidthColumn
+    ) {
+
+        return null;
+
+    }
+
+
+    const input = {
+
+        sepal_length:
+            Number(
+                String(
+                    row[
+                        sepalLengthColumn
+                    ]
+                ).replace(",", ".")
+            ),
+
+        sepal_width:
+            Number(
+                String(
+                    row[
+                        sepalWidthColumn
+                    ]
+                ).replace(",", ".")
+            ),
+
+        petal_length:
+            Number(
+                String(
+                    row[
+                        petalLengthColumn
+                    ]
+                ).replace(",", ".")
+            ),
+
+        petal_width:
+            Number(
+                String(
+                    row[
+                        petalWidthColumn
+                    ]
+                ).replace(",", ".")
+            )
+
+    };
+
+
+    if (!validInput(input)) {
+
+        return null;
+
+    }
+
+
+    return input;
+
+}
+
+
+
+/* =====================================================
+   TÌM NHÃN THẬT
+===================================================== */
+
+function getTrueLabel(row) {
+
+    const labelColumn =
+        findColumn(
+            row,
+            [
+                "species",
+                "Species",
+                "species_name",
+                "label",
+                "class",
+                "target"
+            ]
+        );
+
+
+    if (!labelColumn) {
+
+        return "";
+
+    }
+
+
+    return normalizeSpecies(
+        row[labelColumn]
+    );
+
+}
+
+
+
+/* =====================================================
+   XỬ LÝ FILE
+===================================================== */
+
+async function processRows(rows, fileName) {
+
+    if (!rows || rows.length === 0) {
+
+        showFileError(
+            "File không có dữ liệu."
+        );
+
+        return;
+
+    }
+
+
+    const preparedRows = [];
+
+
+    rows.forEach(
+        (row, index) => {
+
+            const input =
+                rowToInput(row);
+
+
+            if (!input) {
+
+                return;
+
+            }
+
+
+            const trueLabel =
+                getTrueLabel(row);
+
+
+            preparedRows.push({
+
+                originalIndex:
+                    index + 2,
+
+                input:
+                    input,
+
+                trueLabel:
+                    trueLabel
+
+            });
+
+        }
+    );
+
+
+    if (preparedRows.length === 0) {
+
+        showFileError(
+
+            "Không tìm thấy dữ liệu hợp lệ. " +
+
+            "File cần có 4 cột: " +
+
+            "sepal_length, sepal_width, " +
+
+            "petal_length, petal_width."
+
+        );
+
+        return;
+
+    }
+
+
+    const hasLabels =
+        preparedRows.some(
+            row =>
+                row.trueLabel !== ""
+        );
+
+
+    if (
+        analysisMode === "labeled" &&
+        !hasLabels
+    ) {
+
+        showFileError(
+
+            "Bạn đang chọn chế độ Có nhãn " +
+
+            "nhưng file không có cột species/label/class."
+
+        );
+
+        return;
+
+    }
+
+
+    document.getElementById(
+        "fileInfo"
+    ).innerHTML =
+
+        "<b>File:</b> " +
+        fileName +
+
+        "<br>" +
+
+        "<b>Chế độ:</b> " +
+
+        (
+            analysisMode === "labeled"
+                ? "Có nhãn – Kiểm tra dự đoán"
+                : "Chưa biết nhãn – Phân loại"
+        ) +
+
+        "<br>" +
+
+        "<b>Số dòng dữ liệu:</b> " +
+        rows.length +
+
+        "<br>" +
+
+        "<b>Số mẫu hợp lệ:</b> " +
+        preparedRows.length;
+
+
+    document.getElementById(
+        "fileResult"
+    ).innerHTML =
+
+        "<div class='note'>" +
+
+        "⏳ Đang gửi " +
+        preparedRows.length +
+        " mẫu đến mô hình SVM..." +
+
+        "</div>";
+
+
+    try {
+
+        const results =
+            await Promise.all(
+                preparedRows.map(
+                    async row => {
+
+                        const prediction =
+                            await callSVM(
+                                row.input
+                            );
+
+
+                        return {
+
+                            ...row,
+
+                            prediction:
+                                prediction,
+
+                            correct:
+                                row.trueLabel !== ""
+                                    ? normalizeSpecies(
+                                        row.trueLabel
+                                    ) ===
+                                    prediction
+                                    : null
+
+                        };
+
+                    }
+                )
+            );
+
+
+        if (
+            analysisMode === "labeled"
+        ) {
+
+            renderLabeledAnalysis(
+                results,
+                fileName
+            );
+
+        }
+
+        else {
+
+            renderUnlabeledAnalysis(
+                results,
+                fileName
+            );
+
+        }
+
+    }
+
+    catch (error) {
+
+        showFileError(
+
+            "Không thể hoàn thành phân tích. " +
+
+            "Chi tiết: " +
+            error.message
+
+        );
+
+        console.error(error);
+
+    }
+
+}
+
+
+
+/* =====================================================
+   PHÂN TÍCH CHƯA BIẾT NHÃN
+===================================================== */
+
+function renderUnlabeledAnalysis(
+    results,
+    fileName
+) {
+
+    const counts = {
+
+        setosa: 0,
+
+        versicolor: 0,
+
+        virginica: 0
+
+    };
+
+
+    results.forEach(
+        row => {
+
+            if (
+                counts[
+                    row.prediction
+                ] !== undefined
+            ) {
+
+                counts[
+                    row.prediction
+                ]++;
+
+            }
+
+        }
+    );
+
+
+    const total =
+        results.length;
+
+
+    document.getElementById(
+        "fileResult"
+    ).innerHTML =
+
+        buildAnalysisHeader(
+
+            fileName,
+
+            "Chưa biết nhãn – Phân loại",
+
+            total
+
+        ) +
+
+        buildUnlabeledStats(
+            counts,
+            total
+        ) +
+
+        "<h3>📊 Phân bố kết quả SVM</h3>" +
+
+        buildFlowerSummary(
+            "setosa",
+            counts.setosa,
+            total
+        ) +
+
+        buildFlowerSummary(
+            "versicolor",
+            counts.versicolor,
+            total
+        ) +
+
+        buildFlowerSummary(
+            "virginica",
+            counts.virginica,
+            total
+        ) +
+
+        "<h3>📋 Bảng chi tiết kết quả phân loại</h3>" +
+
+        buildUnlabeledTable(
+            results
+        );
+
+
+    saveHistory({
+
+        type: "analysis",
+
+        fileName:
+            fileName,
+
+        total:
+            total,
+
+        method:
+            "Phân tích dữ liệu – Chưa biết nhãn"
+
+    });
+
+}
+
+
+
+/* =====================================================
+   PHÂN TÍCH CÓ NHÃN
+===================================================== */
+
+function renderLabeledAnalysis(
+    results,
+    fileName
+) {
+
+    const total =
+        results.length;
+
+
+    const validLabeled =
+        results.filter(
+            row =>
+                row.trueLabel !== ""
+        );
+
+
+    const correct =
+        validLabeled.filter(
+            row =>
+                row.correct === true
+        ).length;
+
+
+    const wrong =
+        validLabeled.filter(
+            row =>
+                row.correct === false
+        ).length;
+
+
+    const accuracy =
+        total > 0
+            ? (
+                correct / total
+            ) * 100
+            : 0;
+
+
+    const counts =
+        {
+
+            setosa: 0,
+
+            versicolor: 0,
+
+            virginica: 0
+
+        };
+
+
+    results.forEach(
+        row => {
+
+            if (
+                counts[
+                    row.prediction
+                ] !== undefined
+            ) {
+
+                counts[
+                    row.prediction
+                ]++;
+
+            }
+
+        }
+    );
+
+
+    const wrongRows =
+        results.filter(
+            row =>
+                row.correct === false
+        );
+
+
+    document.getElementById(
+        "fileResult"
+    ).innerHTML =
+
+        buildAnalysisHeader(
+
+            fileName,
+
+            "Có nhãn – Kiểm tra dự đoán",
+
+            total
+
+        ) +
+
+
+        "<div class='overview-grid'>" +
+
+
+            "<div class='stat-card'>" +
+
+                "<div class='stat-title'>" +
+                    "Tổng mẫu" +
+                "</div>" +
+
+                "<div class='stat-number'>" +
+                    total +
+                "</div>" +
+
+            "</div>" +
+
+
+            "<div class='stat-card'>" +
+
+                "<div class='stat-title'>" +
+                    "Dự đoán đúng" +
+                "</div>" +
+
+                "<div class='stat-number success'>" +
+                    correct +
+                "</div>" +
+
+            "</div>" +
+
+
+            "<div class='stat-card'>" +
+
+                "<div class='stat-title'>" +
+                    "Dự đoán sai" +
+                "</div>" +
+
+                "<div class='stat-number error'>" +
+                    wrong +
+                "</div>" +
+
+            "</div>" +
+
+
+            "<div class='stat-card'>" +
+
+                "<div class='stat-title'>" +
+                    "Accuracy" +
+                "</div>" +
+
+                "<div class='stat-number'>" +
+                    accuracy.toFixed(2) +
+                    "%" +
+                "</div>" +
+
+            "</div>" +
+
+
+        "</div>" +
+
+
+        "<h3>📊 Phân bố theo kết quả SVM</h3>" +
+
+
+        buildFlowerSummary(
+            "setosa",
+            counts.setosa,
+            total
+        ) +
+
+
+        buildFlowerSummary(
+            "versicolor",
+            counts.versicolor,
+            total
+        ) +
+
+
+        buildFlowerSummary(
+            "virginica",
+            counts.virginica,
+            total
+        ) +
+
+
+        "<h3>🔎 So sánh SVM với nhãn thật</h3>" +
+
+
+        (
+            wrongRows.length > 0
+
+            ?
+
+            "<div class='note'>" +
+
+            "⚠️ Có <b>" +
+            wrongRows.length +
+            "</b> dòng SVM dự đoán khác với nhãn thật. " +
+
+            "Các dòng sai được đánh dấu trong bảng bên dưới." +
+
+            "</div>"
+
+            :
+
+            "<div class='note'>" +
+
+            "🎉 SVM dự đoán đúng tất cả " +
+            total +
+            " mẫu có nhãn trong file." +
+
+            "</div>"
+
+        ) +
+
+
+        "<div class='table-wrapper'>" +
+
+            buildLabeledTable(
+                results
+            ) +
+
+        "</div>";
+
+
+    saveHistory({
+
+        type: "analysis",
+
+        fileName:
+            fileName,
+
+        total:
+            total,
+
+        correct:
+            correct,
+
+        wrong:
+            wrong,
+
+        accuracy:
+            accuracy,
+
+        method:
+            "Phân tích dữ liệu – Có nhãn"
+
+    });
+
+}
+
+
+
+/* =====================================================
+   HEADER PHÂN TÍCH
+===================================================== */
+
+function buildAnalysisHeader(
+    fileName,
+    mode,
+    total
+) {
+
+    return `
+
+        <div class="analysis-header">
+
+            <b>File:</b>
+            ${escapeHTML(fileName)}
+
+            <br>
+
+            <b>Chế độ:</b>
+            <span class="analysis-mode">
+                ${mode}
+            </span>
+
+            <br>
+
+            <b>Số mẫu hợp lệ:</b>
+            ${total}
+
+        </div>
+
+    `;
+
+}
+
+
+
+/* =====================================================
+   THỐNG KÊ CHƯA NHÃN
+===================================================== */
+
+function buildUnlabeledStats(
+    counts,
+    total
+) {
+
+    return `
+
+        <div class="overview-grid">
+
+            <div class="stat-card">
+
+                <div class="stat-title">
+                    Tổng mẫu
+                </div>
+
+                <div class="stat-number">
+                    ${total}
+                </div>
+
+            </div>
+
+
+            <div class="stat-card">
+
+                <div class="stat-title">
+                    SVM → Setosa
+                </div>
+
+                <div class="stat-number">
+                    ${counts.setosa}
+                </div>
+
+            </div>
+
+
+            <div class="stat-card">
+
+                <div class="stat-title">
+                    SVM → Versicolor
+                </div>
+
+                <div class="stat-number">
+                    ${counts.versicolor}
+                </div>
+
+            </div>
+
+
+            <div class="stat-card">
+
+                <div class="stat-title">
+                    SVM → Virginica
+                </div>
+
+                <div class="stat-number">
+                    ${counts.virginica}
+                </div>
+
+            </div>
+
+        </div>
+
+    `;
+
+}
+
+
+
+/* =====================================================
+   THANH PHÂN BỐ HOA
+===================================================== */
+
+function buildFlowerSummary(
+    species,
+    count,
+    total
+) {
+
+    const info =
+        flowerInfo[species];
+
+
+    const percent =
+        total > 0
+            ? (
+                count / total
+            ) * 100
+            : 0;
+
+
+    return `
+
+        <div class="flower-summary">
+
+            <img
+                src="${info.image}"
+                alt="${info.name}">
+
+
+            <div class="flower-summary-content">
+
+                <div class="flower-summary-title">
+                    ${info.name}
+                </div>
+
+                <div class="flower-summary-count">
+                    ${count} mẫu
+                    (${percent.toFixed(1)}%)
+                </div>
+
+
+                <div class="progress">
+
+                    <div
+                        class="progress-bar"
+                        style="width:${percent}%">
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    `;
+
+}
+
+
+
+/* =====================================================
+   BẢNG CHƯA CÓ NHÃN
+===================================================== */
+
+function buildUnlabeledTable(
+    results
+) {
+
+    let html = `
+
+        <div class="table-wrapper">
+
+            <table>
+
+                <thead>
+
+                    <tr>
+
+                        <th>#</th>
+
+                        <th>
+                            Sepal Length
+                        </th>
+
+                        <th>
+                            Sepal Width
+                        </th>
+
+                        <th>
+                            Petal Length
+                        </th>
+
+                        <th>
+                            Petal Width
+                        </th>
+
+                        <th>
+                            SVM dự đoán
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+    `;
+
+
+    results.forEach(
+        (row, index) => {
+
+            html += `
+
+                <tr>
+
+                    <td>
+                        ${index + 1}
+                    </td>
+
+                    <td>
+                        ${row.input.sepal_length}
+                    </td>
+
+                    <td>
+                        ${row.input.sepal_width}
+                    </td>
+
+                    <td>
+                        ${row.input.petal_length}
+                    </td>
+
+                    <td>
+                        ${row.input.petal_width}
+                    </td>
+
+                    <td class="flower-cell ${row.prediction}">
+                        ${displayFlowerName(
+                            row.prediction
+                        )}
+                    </td>
+
+                </tr>
+
+            `;
+
+        }
+    );
+
+
+    html += `
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    `;
+
+
+    return html;
+
+}
+
+
+
+/* =====================================================
+   BẢNG CÓ NHÃN
+===================================================== */
+
+function buildLabeledTable(
+    results
+) {
+
+    let html = `
+
+        <table>
+
+            <thead>
+
+                <tr>
+
+                    <th>#</th>
+
+                    <th>
+                        Sepal Length
+                    </th>
+
+                    <th>
+                        Sepal Width
+                    </th>
+
+                    <th>
+                        Petal Length
+                    </th>
+
+                    <th>
+                        Petal Width
+                    </th>
+
+                    <th>
+                        Nhãn thật
+                    </th>
+
+                    <th>
+                        SVM dự đoán
+                    </th>
+
+                    <th>
+                        Kết quả
+                    </th>
+
+                </tr>
+
+            </thead>
+
+            <tbody>
+
+    `;
+
+
+    results.forEach(
+        (row, index) => {
+
+            const status =
+                row.correct === true
+                    ? "Đúng"
+                    : "Sai";
+
+
+            const statusClass =
+                row.correct === true
+                    ? "correct"
+                    : "wrong";
+
+
+            html += `
+
+                <tr>
+
+                    <td>
+                        ${index + 1}
+                    </td>
+
+                    <td>
+                        ${row.input.sepal_length}
+                    </td>
+
+                    <td>
+                        ${row.input.sepal_width}
+                    </td>
+
+                    <td>
+                        ${row.input.petal_length}
+                    </td>
+
+                    <td>
+                        ${row.input.petal_width}
+                    </td>
+
+                    <td class="flower-cell ${row.trueLabel}">
+                        ${displayFlowerName(
+                            row.trueLabel
+                        )}
+                    </td>
+
+                    <td class="flower-cell ${row.prediction}">
+                        ${displayFlowerName(
+                            row.prediction
+                        )}
+                    </td>
+
+                    <td class="${statusClass}">
+                        ${status}
+                    </td>
+
+                </tr>
+
+            `;
+
+        }
+    );
+
+
+    html += `
+
+            </tbody>
+
+        </table>
+
+    `;
+
+
+    return html;
+
+}
+
+
+
+/* =====================================================
+   LỖI FILE
+===================================================== */
+
+function showFileError(message) {
+
+    document.getElementById(
+        "fileResult"
+    ).innerHTML =
+
+        `
+
+        <div class="note">
+
+            ❌ ${escapeHTML(message)}
+
+        </div>
+
+        `;
+
+}
+
+
+
+/* =====================================================
+   ESCAPE HTML
+===================================================== */
+
+function escapeHTML(value) {
+
+    return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+
+}
+
+
+
+/* =====================================================
+   LỊCH SỬ
+===================================================== */
+
+function saveHistory(item) {
+
+    let history =
+        JSON.parse(
+            localStorage.getItem(
+                "irisHistory"
+            )
+        ) || [];
+
+
+    history.unshift({
+
+        time:
+            new Date()
+                .toLocaleString(
+                    "vi-VN"
+                ),
+
+        ...item
+
+    });
+
+
+    /*
+       Chỉ giữ tối đa 30 hoạt động
+       để lịch sử không quá dài.
+    */
+
+    history =
+        history.slice(0, 30);
+
+
+    localStorage.setItem(
+
+        "irisHistory",
+
+        JSON.stringify(history)
+
+    );
+
+}
+
+
+
+function showHistory() {
+
+    const container =
+        document.getElementById(
+            "history"
+        );
+
+
+    const history =
+        JSON.parse(
+            localStorage.getItem(
+                "irisHistory"
+            )
+        ) || [];
+
+
+    if (history.length === 0) {
+
+        container.innerHTML =
+            "<p>Chưa có lịch sử.</p>";
+
+        return;
+
+    }
+
+
+    container.innerHTML = "";
+
+
+    history.forEach(
+        item => {
+
+            const div =
+                document.createElement(
+                    "div"
+                );
+
+
+            div.className =
+                "history-item";
+
+
+            if (
+                item.type ===
+                "analysis"
+            ) {
+
+                let text =
+
+                    "<div class='history-title'>" +
+
+                    "📊 " +
+
+                    escapeHTML(
+                        item.fileName
+                    ) +
+
+                    "</div>" +
+
+                    "<div>" +
+
+                    "Thời gian: " +
+                    escapeHTML(
+                        item.time
+                    ) +
+
+                    "</div>" +
+
+                    "<div>" +
+
+                    "Số mẫu: " +
+                    item.total +
+
+                    "</div>";
+
+
+                if (
+                    item.accuracy !==
+                    undefined
+                ) {
+
+                    text +=
+
+                        "<div>" +
+
+                        "Dự đoán đúng: " +
+                        item.correct +
+
+                        " | Dự đoán sai: " +
+                        item.wrong +
+
+                        " | Accuracy: " +
+                        Number(
+                            item.accuracy
+                        ).toFixed(2) +
+                        "%" +
+
+                        "</div>";
+
+                }
+
+                else {
+
+                    text +=
+
+                        "<div>" +
+
+                        "Đã phân loại " +
+                        item.total +
+                        " mẫu bằng SVM." +
+
+                        "</div>";
+
+                }
+
+
+                text +=
+
+                    "<div>" +
+
+                    escapeHTML(
+                        item.method
+                    ) +
+
+                    "</div>";
+
+
+                div.innerHTML =
+                    text;
+
+            }
+
+            else {
+
+                div.innerHTML =
+
+                    "<div class='history-title'>" +
+
+                    displayFlowerName(
+                        item.prediction
+                    ) +
+
+                    "</div>" +
+
+                    "<div>" +
+
+                    "Thời gian: " +
+                    escapeHTML(
+                        item.time
+                    ) +
+
+                    "</div>" +
+
+                    "<div>" +
+
+                    escapeHTML(
+                        item.method
+                    ) +
+
+                    "</div>";
+
+            }
+
+
+            container.appendChild(
+                div
+            );
+
+        }
+    );
+
+}
+
+
+
+function clearHistory() {
+
+    localStorage.removeItem(
+        "irisHistory"
+    );
+
+
+    showHistory();
+
+}
+
+
+
+</script>
+
+
+</body>
+
+</html>
